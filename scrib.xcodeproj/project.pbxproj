@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2145CF022D611EA6003405DB /* TimelineTableViewCell in Frameworks */ = {isa = PBXBuildFile; productRef = 2145CF012D611EA6003405DB /* TimelineTableViewCell */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2145CEE02D61182C003405DB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2145CF022D611EA6003405DB /* TimelineTableViewCell in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = scrib;
 			packageProductDependencies = (
+				2145CF012D611EA6003405DB /* TimelineTableViewCell */,
 			);
 			productName = scrib;
 			productReference = 2145CECF2D61182B003405DB /* scrib.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 2145CEC62D61182B003405DB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2145CF002D611EA6003405DB /* XCRemoteSwiftPackageReference "TimelineTableViewCell" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2145CED02D61182B003405DB /* Products */;
 			projectDirPath = "";
@@ -399,6 +408,7 @@
 				DEVELOPMENT_TEAM = RYLB9B332S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +438,7 @@
 				DEVELOPMENT_TEAM = RYLB9B332S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -558,6 +569,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2145CF002D611EA6003405DB /* XCRemoteSwiftPackageReference "TimelineTableViewCell" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kf99916/TimelineTableViewCell.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2145CF012D611EA6003405DB /* TimelineTableViewCell */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2145CF002D611EA6003405DB /* XCRemoteSwiftPackageReference "TimelineTableViewCell" */;
+			productName = TimelineTableViewCell;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2145CEC72D61182B003405DB /* Project object */;
 }
