@@ -147,15 +147,8 @@ struct NewScribView: View {
     @Binding var newScribText: String
     var onPost: () -> Void
     
-    // Character limit
-    private let characterLimit = 280
-    
-    private var remainingCharacters: Int {
-        characterLimit - newScribText.count
-    }
-    
-    private var isOverLimit: Bool {
-        remainingCharacters < 0
+    private var isPostButtonEnabled: Bool {
+        !newScribText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     var body: some View {
@@ -242,10 +235,6 @@ struct NewScribView: View {
             .navigationTitle("New Scrib")
             .navigationBarTitleDisplayMode(.inline)
         }
-    }
-    
-    private var isPostButtonEnabled: Bool {
-        !newScribText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isOverLimit
     }
 }
 
