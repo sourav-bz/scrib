@@ -17,7 +17,8 @@ struct ContentView: View {
                         outer: outer,
                         appSettings: appSettings,
                         isDarkMode: isDarkMode,
-                        toggleDarkMode: { isDarkMode.toggle() }
+                        toggleDarkMode: { isDarkMode.toggle() },
+                        viewModel: viewModel
                     )
                     .toolbar {
                         ToolbarItem(placement: .navigationBarLeading) {
@@ -87,7 +88,7 @@ struct ListView: View {
     let appSettings: AppSettings
     let isDarkMode: Bool
     let toggleDarkMode: () -> Void
-    @StateObject private var viewModel = ScribViewModel()
+    @ObservedObject var viewModel: ScribViewModel
     
     var body: some View {
         ScrollView {
@@ -290,17 +291,10 @@ struct TimelineScribView: View {
                             .padding(.top, 4)
                     }
 
-                    if scrib.content.contains("https://") || scrib.content.contains("http://") {
-                        Text(scrib.content)
-                            .font(.body)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundColor(.blue)
-                    } else {
-                        Text(scrib.content)
-                            .font(.body)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundColor(isDarkMode ? .white : .black)
-                    }
+                    Text(LocalizedStringKey(scrib.content))
+                        .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundColor(isDarkMode ? .white : .black)
 
                     Text(scrib.timestamp.timeAgoDisplay())
                         .font(.caption2)
