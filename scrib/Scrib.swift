@@ -15,7 +15,7 @@ class LinkMetadataFetcher {
 
 struct Scrib: Identifiable, Codable {
     let id = UUID()
-    let content: String
+    var content: String
     let timestamp: Date
     var linkMetadata: LinkMetadataWrapper?
     

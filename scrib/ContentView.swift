@@ -195,7 +195,8 @@ struct ListView: View {
                         TimelineScribView(
                             scrib: scrib,
                             isLast: index == viewModel.scribs.count - 1,
-                            isDarkMode: isDarkMode
+                            isDarkMode: isDarkMode,
+                            viewModel: viewModel
                         )
                     }
                     Color.clear.frame(height: 100)
@@ -330,6 +331,9 @@ struct TimelineScribView: View {
     let scrib: Scrib
     let isLast: Bool
     let isDarkMode: Bool
+    @ObservedObject var viewModel: ScribViewModel
+    @State private var showingEditSheet = false
+    @State private var showingDeleteAlert = false
     
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
@@ -380,12 +384,43 @@ struct TimelineScribView: View {
                 .background(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 2)
+                .contextMenu {
+                    Button(action: {
+                        hapticFeedback()
+                        showingEditSheet = true
+                    }) {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    
+                    Button(role: .destructive, action: {
+                        hapticFeedback()
+                        showingDeleteAlert = true
+                    }) {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .confirmationDialog("Delete Scrib", isPresented: $showingDeleteAlert) {
+                    Button("Delete", role: .destructive) {
+                        viewModel.deleteScrib(id: scrib.id)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Are you sure you want to delete this scrib?")
+                }
             }
             .padding(.leading, 12)
             .padding(.trailing, 16)
             .padding(.bottom, 18)
         }
         .padding(.leading, 16)
+        .sheet(isPresented: $showingEditSheet) {
+            EditScribView(isDarkMode: isDarkMode, scrib: scrib, viewModel: viewModel)
+        }
+    }
+    
+    private func hapticFeedback() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
 }
 
@@ -465,6 +500,99 @@ struct LinkPreviewView: View {
         if let authorData = metadata.authorImageData {
             self.authorImage = UIImage(data: authorData)
         }
+    }
+}
+
+struct EditScribView: View {
+    @Environment(\.dismiss) var dismiss
+    let isDarkMode: Bool
+    let scribId: UUID
+    @State private var editedText: String
+    @ObservedObject var viewModel: ScribViewModel
+    
+    init(isDarkMode: Bool, scrib: Scrib, viewModel: ScribViewModel) {
+        self.isDarkMode = isDarkMode
+        self.scribId = scrib.id
+        self._editedText = State(initialValue: scrib.content)
+        self.viewModel = viewModel
+    }
+    
+    private var isUpdateButtonEnabled: Bool {
+        !editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(isDarkMode ? UIColor.systemBackground : .init(red: 0.96, green: 0.96, blue: 0.96, alpha: 1))
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Text Editor Area
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $editedText)
+                            .scrollContentBackground(.hidden)
+                            .frame(maxHeight: .infinity)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            .padding(.bottom, 40)
+                            .background(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
+                            .cornerRadius(16)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                            .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 2)
+                    }
+                    
+                    // Bottom Action Area
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Text("Cancel")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
+                                        .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 4, x: 0, y: 2)
+                                )
+                        }
+                        
+                        Button(action: {
+                            if isUpdateButtonEnabled {
+                                viewModel.editScrib(id: scribId, newContent: editedText)
+                                dismiss()
+                            }
+                        }) {
+                            HStack {
+                                Text("Update")
+                                Image(systemName: "checkmark.circle.fill")
+                            }
+                            .font(.system(.body, design: .rounded))
+                            .fontWeight(.semibold)
+                            .foregroundColor(isDarkMode ? .black : .white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(isDarkMode ? .white : .black)
+                                    .opacity(isUpdateButtonEnabled ? 1.0 : 0.5)
+                            )
+                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        }
+                        .disabled(!isUpdateButtonEnabled)
+                    }
+                    .padding(.top, 16)
+                }
+                .padding(16)
+            }
+            .navigationTitle("Edit Scrib")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+        }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 }
 
