@@ -2,41 +2,171 @@ import SwiftUI
 
 struct ContentView: View {
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @StateObject private var viewModel = ScribViewModel()
+    @State private var newScribText = ""
+    @State private var showingNewScribSheet = false
     private var appSettings: AppSettings = .init()
     private let title: String = "Scrib"
     
     var body: some View {
         GeometryReader { outer in
             NavigationStack {
-                ListView(
-                    title: title,
-                    outer: outer,
-                    appSettings: appSettings,
-                    isDarkMode: isDarkMode,
-                    toggleDarkMode: { isDarkMode.toggle() }
-                )
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        ToolbarTitle(
-                            title: title,
-                            appSettings: appSettings,
-                            isDarkMode: isDarkMode
-                        )
-                        .background(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color.white)
+                ZStack {
+                    ListView(
+                        title: title,
+                        outer: outer,
+                        appSettings: appSettings,
+                        isDarkMode: isDarkMode,
+                        toggleDarkMode: { isDarkMode.toggle() }
+                    )
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            ToolbarTitle(
+                                title: title,
+                                appSettings: appSettings,
+                                isDarkMode: isDarkMode
+                            )
+                            .background(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color.white)
+                        }
+                        
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            ToolbarButtons(
+                                isDarkMode: isDarkMode, 
+                                toggleDarkMode: { isDarkMode.toggle() }, 
+                                appSettings: appSettings
+                            )
+                            .background(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color.white)
+                        }
                     }
+                    .toolbarBackground(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color.white, for: .navigationBar)
                     
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        ToolbarButtons(
-                            isDarkMode: isDarkMode, 
-                            toggleDarkMode: { isDarkMode.toggle() }, 
-                            appSettings: appSettings
-                        )
-                        .background(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color.white)
+                    // Floating Action Button
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showingNewScribSheet = true
+                            }) {
+                                Image(systemName: "pencil")
+                                    .font(.title2.weight(.semibold))
+                                    .foregroundColor(isDarkMode ? .black : .white)
+                                    .frame(width: 50, height: 50)
+                                    .background(
+                                        isDarkMode ? Color.white : Color.black
+                                    )
+                                    .cornerRadius(25)
+                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 20)
+                        }
                     }
                 }
-                .toolbarBackground(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color.white, for: .navigationBar)
+            }
+            .sheet(isPresented: $showingNewScribSheet) {
+                NewScribView(
+                    isDarkMode: isDarkMode,
+                    newScribText: $newScribText
+                ) {
+                    if !newScribText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        viewModel.addScrib(newScribText)
+                        newScribText = ""
+                    }
+                }
             }
         }
+    }
+}
+
+struct NewScribView: View {
+    @Environment(\.dismiss) var dismiss
+    let isDarkMode: Bool
+    @Binding var newScribText: String
+    var onPost: () -> Void
+    
+    private var isPostButtonEnabled: Bool {
+        !newScribText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(isDarkMode ? UIColor.systemBackground : .init(red: 0.96, green: 0.96, blue: 0.96, alpha: 1))
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Text Editor Area
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $newScribText)
+                            .scrollContentBackground(.hidden)
+                            .frame(maxHeight: .infinity)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            .padding(.bottom, 40)
+                            .background(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
+                            .cornerRadius(16)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                            .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 2)
+                        
+                        if newScribText.isEmpty {
+                            Text("What's on your mind?")
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 24)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                    
+                    // Bottom Action Area
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Text("Cancel")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
+                                        .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 4, x: 0, y: 2)
+                                )
+                        }
+                        
+                        Button(action: {
+                            onPost()
+                            dismiss()
+                        }) {
+                            HStack {
+                                Text("Post")
+                                Image(systemName: "arrow.up.circle.fill")
+                            }
+                            .font(.system(.body, design: .rounded))
+                            .fontWeight(.semibold)
+                            .foregroundColor(isDarkMode ? .black : .white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(isDarkMode ? .white : .black)
+                                    .opacity(isPostButtonEnabled ? 1.0 : 0.5)
+                            )
+                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        }
+                        .disabled(!isPostButtonEnabled)
+                    }
+                    .padding(.top, 16)
+                }
+                .padding(16)
+            }
+            .navigationTitle("New Scrib")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+        }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 }
 
@@ -257,4 +387,87 @@ struct TimelineScribView: View {
         }
         .padding(.leading, 16)
     }
+}
+
+struct LinkPreviewView: View {
+    let metadata: LinkMetadataWrapper
+    let isDarkMode: Bool
+    @State private var previewImage: UIImage?
+    @State private var authorImage: UIImage?
+    
+    var body: some View {
+        Link(destination: metadata.url) {
+            VStack(alignment: .leading, spacing: 10) {
+                // Author/Site info
+                HStack(spacing: 10) {
+                    if let authorImage = authorImage {
+                        Image(uiImage: authorImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 36, height: 36)
+                            .clipShape(Circle())
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 3) {
+                        if let title = metadata.title {
+                            Text(title)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(isDarkMode ? .white : .black)
+                                .lineLimit(2)
+                        }
+                        Text(metadata.url.host ?? "")
+                            .font(.caption)
+                            .foregroundColor(isDarkMode ? .gray : .secondary)
+                    }
+                }
+                
+                // Preview Image
+                if let previewImage = previewImage {
+                    Image(uiImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 140)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+            .padding(12)
+            .background(
+                isDarkMode ? 
+                    Color(red: 0.16, green: 0.16, blue: 0.16) : 
+                    Color.white
+            )
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(
+                        isDarkMode ? 
+                            Color.white.opacity(0.1) : 
+                            Color.black.opacity(0.1),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 2)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            loadImages()
+        }
+    }
+    
+    private func loadImages() {
+        // Load preview image
+        if let imageData = metadata.imageData {
+            self.previewImage = UIImage(data: imageData)
+        }
+        
+        // Load author/site image
+        if let authorData = metadata.authorImageData {
+            self.authorImage = UIImage(data: authorData)
+        }
+    }
+}
+
+#Preview {
+    ContentView()
 }
