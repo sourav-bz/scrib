@@ -240,17 +240,22 @@ struct HeaderButtons: View {
     @Environment(\.colorScheme) var colorScheme
     let isDarkMode: Bool
     let toggleDarkMode: () -> Void
+    @State private var showingSearchSheet = false
+    @StateObject private var viewModel = ScribViewModel()
     
     var body: some View {
         HStack(spacing: 8) {
             // Search button
             Button {
-                // Search action
+                showingSearchSheet = true
             } label: {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18))
                     .foregroundColor(isDarkMode ? .white : .black)
                     .padding(4)
+            }
+            .sheet(isPresented: $showingSearchSheet) {
+                SearchView(isDarkMode: isDarkMode, viewModel: viewModel)
             }
             
             // Dark mode toggle
@@ -591,6 +596,122 @@ struct EditScribView: View {
             .navigationTitle("Edit Scrib")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+        }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
+    }
+}
+
+struct SearchView: View {
+    @Environment(\.dismiss) var dismiss
+    let isDarkMode: Bool
+    @ObservedObject var viewModel: ScribViewModel
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(isDarkMode ? UIColor.systemBackground : .init(red: 0.96, green: 0.96, blue: 0.96, alpha: 1))
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Search scribs...", text: $viewModel.searchText)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        
+                        if !viewModel.searchText.isEmpty {
+                            Button(action: {
+                                viewModel.searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .background(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                    .padding(.top)
+                    
+                    if viewModel.searchText.isEmpty {
+                        // Placeholder when no search
+                        VStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray)
+                            Text("Search your scribs")
+                                .font(.title3)
+                                .foregroundColor(.gray)
+                            Text("Type something to start searching")
+                                .font(.subheadline)
+                                .foregroundColor(.gray.opacity(0.8))
+                        }
+                        .frame(maxHeight: .infinity)
+                    } else if viewModel.filteredScribs.isEmpty {
+                        // No results found
+                        VStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray)
+                            Text("No results found")
+                                .font(.title3)
+                                .foregroundColor(.gray)
+                            Text("Try searching with different keywords")
+                                .font(.subheadline)
+                                .foregroundColor(.gray.opacity(0.8))
+                        }
+                        .frame(maxHeight: .infinity)
+                    } else {
+                        // Results List
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(viewModel.filteredScribs) { scrib in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        if let metadata = scrib.linkMetadata {
+                                            LinkPreviewView(metadata: metadata, isDarkMode: isDarkMode)
+                                                .padding(.top, 4)
+                                        }
+                                        
+                                        if scrib.content.contains("https://") || scrib.content.contains("http://") {
+                                            Text(scrib.content)
+                                                .font(.body)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .foregroundColor(.blue)
+                                        } else {
+                                            Text(scrib.content)
+                                                .font(.body)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .foregroundColor(isDarkMode ? .white : .black)
+                                        }
+                                        
+                                        Text(scrib.timestamp.timeAgoDisplay())
+                                            .font(.caption2)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding()
+                                    .background(isDarkMode ? Color(red: 0.16, green: 0.16, blue: 0.16) : .white)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 2)
+                                }
+                            }
+                            .padding()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Search")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
         }
         .preferredColorScheme(isDarkMode ? .dark : .light)
     }

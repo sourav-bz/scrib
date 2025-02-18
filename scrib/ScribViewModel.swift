@@ -4,10 +4,21 @@ import LinkPresentation
 @MainActor
 class ScribViewModel: ObservableObject {
     @Published private(set) var scribs: [Scrib] = []
+    @Published var searchText: String = ""
+    @Published private(set) var searchResults: [Scrib] = []
     private let saveKey = "SavedScribs"
     
     init() {
         loadScribs()
+    }
+    
+    var filteredScribs: [Scrib] {
+        if searchText.isEmpty {
+            return scribs
+        }
+        return scribs.filter { scrib in
+            scrib.content.localizedCaseInsensitiveContains(searchText)
+        }
     }
     
     func addScrib(_ content: String) {
